@@ -1,3 +1,104 @@
+## Dockerized jaffle shop
+
+Forked from fishtown/jaffle_shop, added postgres and docker-compose for a stand-alone demo.
+
+### Prerequisites
+* docker
+* docker compose
+* git
+
+
+### Instructions
+
+1. Spin up the containers in detached mode
+```sh
+$ docker-compose up -d
+```
+
+2. Shell to the dbt container
+```sh
+$ docker exec -it dbt /bin/bash
+```
+
+3. `dbt` _all the things_
+```sh
+$ dbt seed
+$ dbt run
+```
+
+### Using the Jinja REPL
+
+From the dbt container you can launch the Jinja REPL to try out snippets and syntax
+
+```sh
+$ python /jinrepl/jinrepl.py
+
+```
+An alias has been added to the container so at an interactive bash shell you can just do
+
+```sh
+$ jinrepl
+```
+
+
+### Connecting directly to the database
+
+* Running `psql` on the postgres container
+_password not required because `trust` in unix land_
+```sh
+$ docker exec -it pg psql -U postgres
+```
+
+* Running *`psql` from the host container
+    * `~/.pgpass` is the awesome, normally I would use that, but 
+     for the purposes of this demo temporarily point to a different location for it, because the real one contains secrets
+    * needs chmod 600
+    * The `docker-compose` file maps ports 5433:5432 because you may already be using the default port on your host. I know I am.
+```sh
+$ export PGPASSFILE='.pgpass' psql -h localhost -p 5433 -U postgres
+```
+
+
+
+### clean up
+
+```sh
+$ docker-compose down && docker-compose rm -f
+```
+
+You could remove the docker images if reqd
+
+```sh
+$ docker image rm dbt postgres
+
+```
+
+The database volume can be annoying, if you want to add more init scripts they won't run if the DB exists
+```sh
+$ docker volume ls
+$ docker volume rm <id here>
+
+# e.g.
+$ docker volume rm jaffle_shop_postgres
+```
+
+If you set it for the session you may want to revert to the default location for PGPASSFILE `~/.pgpass`
+```sh
+$ unset PGPASSFILE
+```
+
+### Caveats
+Tested on MacOS Mojave, docker 19.03.5, docker-compose 1.24.1
+
+Should work fine on Windows & Linux but not tested.
+
+
+
+----------------
+
+_Original Readme as per fishtown/jaffle_shop_ 
+
+
 ## dbt models for `jaffle_shop`
 
 `jaffle_shop` is a fictional ecommerce store. This dbt project transforms raw
