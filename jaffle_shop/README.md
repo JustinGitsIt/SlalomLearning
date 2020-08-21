@@ -6,6 +6,10 @@
 * git
 * dbt - https://docs.getdbt.com/dbt-cli/installation/
 
+### To Get Started
+
+Please clone this repo onto your machine
+
 ### Docker Instructions
 
 1. Spin up the containers in detached mode
