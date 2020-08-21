@@ -1,12 +1,10 @@
-## Dockerized jaffle shop
-
-Forked from fishtown/jaffle_shop, added postgres and docker-compose for a stand-alone demo.
+###This tutorial is to help _Builders get the hang of dbt, how it works, and provide some Fishtown repos to help get your project off the ground quickly
 
 ### Prerequisites
 * docker
 * docker compose
 * git
-
+* dbt - https://docs.getdbt.com/dbt-cli/installation/
 
 ### Instructions
 
@@ -20,31 +18,10 @@ $ docker-compose up -d
 $ docker exec -it dbt /bin/bash
 ```
 
-3. `dbt` _all the things_
-```sh
-$ dbt seed
-$ dbt run
-```
-
-### Using the Jinja REPL
-
-From the dbt container you can launch the Jinja REPL to try out snippets and syntax
-
-```sh
-$ python /jinrepl/jinrepl.py
-
-```
-An alias has been added to the container so at an interactive bash shell you can just do
-
-```sh
-$ jinrepl
-```
-
 
 ### Connecting directly to the database
 
 * Running `psql` on the postgres container
-_password not required because `trust` in unix land_
 ```sh
 $ docker exec -it pg psql -U postgres
 ```
@@ -58,128 +35,62 @@ $ docker exec -it pg psql -U postgres
 $ export PGPASSFILE='.pgpass' psql -h localhost -p 5433 -U postgres
 ```
 
+### Getting started with dbt
+----------------------------------------
 
 
-### clean up
+### What is dbt
 
-```sh
-$ docker-compose down && docker-compose rm -f
+dbt stands for data build tool. It is an open source packaged software that was created by Fishtown Analytics. God bless them. 
+
+dbt’s main function is to act as a development environment for you to work with the language of data analytics… wait for it… SQL! 
+
+It is built upon Python and heavily relies on Python’s Jinja template library. It gives devs the amazing power to write templates that can generate SQL on the fly. You can now save time by building jinja templates to build your SQL queries. All you need to do is pass in the needed variables and these SQL queries will be built for you. You can easily create SQL for an entire database in minutes.
+
+
+
+### Building a database transformation codebase with dbt
+
+Fishtown gives a lot of useful tools for devs to use to expedite their warehouse build. If you are curious check them out here: https://github.com/fishtown-analytics/dbt-codegen
+
+Yaml is dbt’s jam. dbt pretty much runs off your yaml configurations. You can loosely couple you’re E, L and T by messing with your dbt_project.yml and the source yaml files. This is immensely powerful because it allows you to be agnostic on what your sources are and gives you great flexibility on building your Ts.
+In the repo above you can find a macro called generate_source.sql. This will look in the profiles.yml that is created when you initially start your dbt project and pop out the source tables, columns, and any other meta data you may want to include (note you will need to refactor some to do so) from the database in your yaml. You can now start to build your staging area!
+
+If you go back to the handy dandy repo they have another wonderful macro, generate_base_model.sql. You can run this macro with the source yaml you just created as the input, and BAM, your staging environment is created. If you have a specific schema you would like this to live or a certain materialization, you can adjust this in your dbt_project.yml.  
+
+NOTE: if data type conversions or table calculations need to happen make it happen in the staging area.
+
+When building out your models we want to make sure to only reference sources once, in the staging environment, and then only reference models as you move downstream in your data model. You can look in models/marts/core/intermediate to see how the dependencies are built upon the previous set of models. These tables use the stage tables just created as the sources for the queries.
+
+This is because it allows you to only have to make changes in one place in a source and those changes are automatically applied to your downstream models that reference that source
+
+When you get ready to built the presentation layer dbt best practice is to create an intermediate staging area. In this area staging tables are joined into larger wider tables that will be used as the main building blocks for your presentation layer tables (facts and dims). This is also the area you want to start adding in any calculations or special business logic before
+
+
+### Finishing up codebase build
+
+dbt give various ways to materialize your data. They can be set as tables, views, ephemeral tables, etc., please feel free to read more about these and their advantages and disadvantages here: https://docs.getdbt.com/docs/building-a-dbt-project/building-models/materializations
+
+There is a ton of information that this read me does not go over. There are seed tables, built in tests, yaml configs and other fun tools too, so please feel free to peruse their robust documentation: https://docs.getdbt.com/docs/introduction
+
+
+### Running your dbt project in bash
+ 
+ It is really easy to run dbt. There are really only two commands that you need to deploy your project to the target database defined in your profiles.yml
+ 
+```
+dbt compile  #compiles the code to check for errors
+
+dbt run  #deploys it to your target database
+
+#Drink a beer (or favorite beverage) and watch the magic happen
 ```
 
-You could remove the docker images if reqd
-
-```sh
-$ docker image rm dbt postgres
-
-```
-
-The database volume can be annoying, if you want to add more init scripts they won't run if the DB exists
-```sh
-$ docker volume ls
-$ docker volume rm <id here>
-
-# e.g.
-$ docker volume rm jaffle_shop_postgres
-```
-
-If you set it for the session you may want to revert to the default location for PGPASSFILE `~/.pgpass`
-```sh
-$ unset PGPASSFILE
-```
-
-### Caveats
-Tested on MacOS Mojave, docker 19.03.5, docker-compose 1.24.1
-
-Should work fine on Windows & Linux but not tested.
-
-
-
-----------------
-
-_Original Readme as per fishtown/jaffle_shop_ 
-
-
-## dbt models for `jaffle_shop`
-
-`jaffle_shop` is a fictional ecommerce store. This dbt project transforms raw
-data from an app database into a customers and orders model ready for analytics.
-
-The raw data from the app consists of customers, orders, and payments, with the
-following entity-relationship diagram:
-
-![Jaffle Shop ERD](/etc/jaffle_shop_erd.png)
-
-This [dbt](https://www.getdbt.com/) project has a split personality:
-* **Tutorial**: The [tutorial](https://github.com/fishtown-analytics/jaffle_shop/tree/master)
-  branch is a useful minimum viable dbt project to get new dbt users up and
-  running with their first dbt project. It includes [seed](https://docs.getdbt.com/reference#seed)
-  files with generated data so a user can run this project on their own warehouse.
-* **Demo**: The [demo](https://github.com/fishtown-analytics/jaffle_shop/tree/demo/master)
-  branch is used to illustrate how we (Fishtown Analytics) would structure a dbt
-  project. The project assumes that your raw data is already in your warehouse,
-  so therefore the repo cannot be run as a standalone project. The demo is more
-  complex than the tutorial as it is structured in a way that can be extended for
-  larger projects.
-
-### Using this project as a tutorial
-To get up and running with this project:
-1. Install dbt using [these instructions](https://docs.getdbt.com/docs/installation).
-
-2. Clone this repository. If you need extra help, see [these instructions](https://docs.getdbt.com/docs/use-an-existing-project).
-
-3. Change into the `jaffle_shop` directory from the command line:
-```bash
-$ cd jaffle_shop
-```
-
-4. Set up a profile called `jaffle_shop` to connect to a data warehouse by
-  following [these instructions](https://docs.getdbt.com/docs/configure-your-profile).
-  If you have access to a data warehouse, you can use those credentials – we
-  recommend setting your [target schema](https://docs.getdbt.com/docs/configure-your-profile#section-populating-your-profile)
-  to be a new schema (dbt will create the schema for you, as long as you have
-  the right priviliges). If you don't have access to an existing data warehouse,
-  you can also setup a local postgres database and connect to it in your profile.
-
-5. Ensure your profile is setup correctly from the command line:
-```bash
-$ dbt debug
-```
-
-6. Load the CSVs with the demo data set. This materializes the CSVs as tables in
-  your target schema. Note that a typical dbt project **does not require this
-  step** since dbt assumes your raw data is already in your warehouse.
-```bash
-$ dbt seed
-```
-
-7. Run the models:
-```bash
-$ dbt run
-```
-
-> **NOTE:** If this steps fails, it might be that you need to make small changes to the SQL in the models folder to adjust for the flavor of SQL of your target database. Definitely consider this if you are using a community-contributed adapter.
-
-8. Test the output of the models:
-```bash
-$ dbt test
-```
-
-9. Generate documentation for the project:
-```bash
-$ dbt docs generate
-```
-
-10. View the documentation for the project:
-```bash
-$ dbt docs serve
-```
-
-### What is a jaffle?
-A jaffle is a toasted sandwich with crimped, sealed edges. Invented in Bondi in 1949, the humble jaffle is an Australian classic. The sealed edges allow jaffle-eaters to enjoy liquid fillings inside the sandwich, which reach temperatures close to the core of the earth during cooking. Often consumed at home after a night out, the most classic filling is tinned spaghetti, while my personal favourite is leftover beef stew with melted cheese.
 
 ---
 For more information on dbt:
-- Read the [introduction to dbt](https://dbt.readme.io/docs/introduction).
-- Read the [dbt viewpoint](https://dbt.readme.io/docs/viewpoint).
-- Join the [chat](http://slack.getdbt.com/) on Slack for live questions and support.
----
+- Read the introduction to dbt:(https://dbt.readme.io/docs/introduction).
+- dbt Utils: (https://github.com/fishtown-analytics/dbt-utils/tree/dev/0.6.0/macros)
+- dbt code-gen: (https://github.com/fishtown-analytics/dbt-codegen)
+- dbt audit-helper: (https://github.com/fishtown-analytics/dbt-audit-helper)
+
