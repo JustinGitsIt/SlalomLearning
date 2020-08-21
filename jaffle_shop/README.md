@@ -1,4 +1,4 @@
-###This tutorial is to help _Builders get the hang of dbt, how it works, and provide some Fishtown repos to help get your project off the ground quickly
+### This tutorial is to help _Builders get the hang of dbt, how it works, and provide some Fishtown repos to help get your project off the ground quickly
 
 ### Prerequisites
 * docker
@@ -6,7 +6,7 @@
 * git
 * dbt - https://docs.getdbt.com/dbt-cli/installation/
 
-### Instructions
+### Docker Instructions
 
 1. Spin up the containers in detached mode
 ```sh
@@ -34,6 +34,8 @@ $ docker exec -it pg psql -U postgres
 ```sh
 $ export PGPASSFILE='.pgpass' psql -h localhost -p 5433 -U postgres
 ```
+
+
 
 ### Getting started with dbt
 ----------------------------------------
@@ -86,11 +88,34 @@ dbt run  #deploys it to your target database
 #Drink a beer (or favorite beverage) and watch the magic happen
 ```
 
+You can now open your postgres database that was created at the beginning of this tutorial to see all of the models have been deployed. Feel free to change some of the materializations in your dbt_project.yml and dbt run it all again to see how they change in your database.
 
----
-For more information on dbt:
+
+### BUT WAIT THERE’S MORE!
+
+If you run:
+```
+dbt docs generate  #compiles a static HTML file using the node and graph the dbt project creates in the dbt compile command
+
+dbt docs serve  #locally hosts the HTML file
+```
+
+dbt will generate a static HTML page and host a rich documentation site that catalogs your whole project, shows how models are referenced, and displays any documentation you want to include. You can find it under target/index.html There is also an opportunity to host these sites on an S3 bucket or have dbt Cloud host it if you would like it to be available to others. 
+
+The dbt site has a lot to offer, so look at some of the features on this page: https://docs.getdbt.com/docs/building-a-dbt-project/documentation/
+
+Note worthy features are: the directory lay out of the project, overview of tables and its associated code that is in jinja and its compiled formats, and the data lineage graph for each table
+
+dbt takes a huge problem for a lot of companies and makes it easy if you build your development workflow to incorporate documentation as you develop. They give the ability to have a living and versionalbe data dictionary and documentation site. Pretty cool, huh?
+
+
+
+### Noteworthy sites and repo
+
 - Read the introduction to dbt:(https://dbt.readme.io/docs/introduction).
-- dbt Utils: (https://github.com/fishtown-analytics/dbt-utils/tree/dev/0.6.0/macros)
-- dbt code-gen: (https://github.com/fishtown-analytics/dbt-codegen)
-- dbt audit-helper: (https://github.com/fishtown-analytics/dbt-audit-helper)
+- dbt Utils: (https://github.com/fishtown-analytics/dbt-utils/tree/dev/0.6.0/macros) this repo has a lot of common macros that you can use to help speed up the development of your project
+
+- dbt code-gen: (https://github.com/fishtown-analytics/dbt-codegen) this repo contains macro to get your project off the ground quickly and create yamls for your data definintions and macros to dynamically build out models based on yaml inputs
+
+- dbt audit-helper: (https://github.com/fishtown-analytics/dbt-audit-helper) this repo has macros that will build models that can help you do some data profiling and build out parity tests that can be used to compare new features to your current environment and see what happens to the data
 
